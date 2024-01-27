@@ -61,6 +61,7 @@ def BNF() -> Any:
         addop = plus | minus
         multop = mult | div
         expop = Literal("^")
+        factorial = Literal("!")
 
         expr = Forward()
         expr_list = delimitedList(Group(expr))
@@ -123,6 +124,7 @@ fn = {
     "asinh": math.asinh,
     "acosh": math.acosh,
     "atanh": math.atanh,
+    "factorial": math.factorial,
 }
 
 
@@ -147,6 +149,8 @@ def evaluate_stack(s: List[Any]) -> Union[int, float]:
         # note: args are pushed onto the stack in reverse order
         args = reversed([evaluate_stack(s) for _ in range(num_args)])
         return fn[op](*args)
+    elif op == "factorial":
+        return math.factorial(evaluate_stack(s))
     elif op[0].isalpha():
         raise Exception(f"invalid identifier {op}")
     else:
@@ -168,6 +172,8 @@ def expr_compute(s: str) -> Optional[float]:
 
 while True:
     inp = str(input())
+    if inp.lower() == "end" or inp.lower() == "break":
+        break
     print(f"Result = {expr_compute(inp)}")
 
 # flake8: noqa
