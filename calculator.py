@@ -1,6 +1,19 @@
+#!/usr/bin/env python3
+
 import math
 import operator
 from typing import Any, List, Optional, Union
+
+from prompt_toolkit import prompt
+from prompt_toolkit.completion import WordCompleter
+from prompt_toolkit.lexers import PygmentsLexer
+from prompt_toolkit.styles import Style
+from prompt_toolkit.shortcuts import print_formatted_text
+from prompt_toolkit.formatted_text import PygmentsTokens
+from prompt_toolkit.history import InMemoryHistory
+from prompt_toolkit.keys import Keys
+from prompt_toolkit.key_binding import KeyBindings
+from pygments.lexers.python import PythonLexer
 
 from pyparsing import (
     CaselessKeyword,
@@ -18,10 +31,28 @@ from pyparsing import (
 
 exprStack: Any = []
 
+# Define the autocomplete words
+autocomplete_words = list(set(math.__dict__.keys())) + list(set(operator.__dict__.keys()))
+autocomplete_words += list(set(["sin", "cos", "tan", "sqrt", "ln", "log", "log2", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "asinh", "acosh", "atanh", "factorial", "fac", "phi", "gamma", "c", "G"]))
+autocomplete_words = list(set(autocomplete_words))
+
+# Define the style for the autocomplete suggestions
+style = Style.from_dict({
+    'prompt': '#00ff00 bold', 
+    'autocomplete': '#ansigreen',
+})
+
+history = InMemoryHistory()
+
+# Set up the WordCompleter for autocomplete
+completer = WordCompleter(autocomplete_words, ignore_case=True)
+
+# Function to get the input with autocompletion
+def get_input_with_autocomplete() -> str:
+    return prompt('>>> ', lexer=PygmentsLexer(PythonLexer), completer=completer, style=style, history=history)
 
 def push_first(toks: List[Token]):
     exprStack.append(toks[0])
-
 
 def push_unary_minus(toks: List[Token]):
     for t in toks:
@@ -40,7 +71,7 @@ def BNF() -> Any:
     multop  :: '*' | '/'
     addop   :: '+' | '-'
     integer :: ['+' | '-'] '0'..'9'+
-    atom    :: PI | E | real | fn '(' expr ')' | '(' expr ')'
+    atom    :: PI | E | TAU | PHI | GAMMA | C | G | real | fn '(' expr ')' | '(' expr ')'
     factor  :: atom [ expop factor ]*
     term    :: factor [ multop factor ]*
     expr    :: term [ addop term ]*
@@ -52,7 +83,11 @@ def BNF() -> Any:
         # and CaselessKeyword only match whole words
         e = CaselessKeyword("E")
         pi = CaselessKeyword("PI")
-        # tau = CaselessKeyword("TAU")
+        tau = CaselessKeyword("TAU")
+        phi = CaselessKeyword("PHI")
+        gamma = CaselessKeyword("GAMMA")
+        c = CaselessKeyword("C")
+        g = CaselessKeyword("G")
         fnumber = Regex(r"[+-]?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?")
         ident = Word(alphas, alphanums + "_$")
 
@@ -74,10 +109,13 @@ def BNF() -> Any:
 
         f = ident + lpar - Group(expr_list) + rpar  # type: ignore
         fn_call = f.setParseAction(insert_fn_argcount_tuple)  # type: ignore
-        g = fn_call | pi | e | fnumber | ident  # type: ignore
-        assert g is not None
+        g_ = fn_call | pi | e | tau | phi | gamma | c | g | fnumber | ident  # type: ignore
+        assert g_ is not None
+        # atom = addop[...] + (
+        #     g_.setParseAction(push_first) | Group(lpar + expr + rpar)  # type: ignore
+        # )
         atom = addop[...] + (
-            g.setParseAction(push_first) | Group(lpar + expr + rpar)  # type: ignore
+            g_ | Group(lpar + expr + rpar) | g_.setParseAction(push_first)
         )
         atom = atom.setParseAction(push_unary_minus)  # type: ignore
 
@@ -125,8 +163,18 @@ fn = {
     "acosh": math.acosh,
     "atanh": math.atanh,
     "factorial": math.factorial,
+    "fac": math.factorial,
 }
 
+constants = {
+    "PI": math.pi,
+    "E": math.e,
+    "TAU": math.tau,
+    "PHI": (1 + math.sqrt(5)) / 2,  # Golden ratio
+    "GAMMA": 0.57721566490153286060,  # Euler-Mascheroni constant
+    "C": 299792458,  # Speed of light in meters per second
+    "G": 6.67430e-11,  # Gravitational constant in m^3 kg^-1 s^-2
+}
 
 def evaluate_stack(s: List[Any]) -> Union[int, float]:
     op, num_args = s.pop(), 0
@@ -139,18 +187,14 @@ def evaluate_stack(s: List[Any]) -> Union[int, float]:
         op2 = evaluate_stack(s)
         op1 = evaluate_stack(s)
         return opn[op](op1, op2)
-    elif op == "PI":
-        return math.pi  # 3.1415926535
-    elif op == "E":
-        return math.e  # 2.718281828
-    # elif op == "TAU":
-    #     return math.tau
+    elif op in constants:
+        return constants[op]
     elif op in fn:
         # note: args are pushed onto the stack in reverse order
         args = reversed([evaluate_stack(s) for _ in range(num_args)])
         return fn[op](*args)
-    elif op == "factorial":
-        return math.factorial(evaluate_stack(s))
+    elif op == "factorial" or op == "fac":
+        return math.factorial(int(evaluate_stack(s)))
     elif op[0].isalpha():
         raise Exception(f"invalid identifier {op}")
     else:
@@ -169,11 +213,30 @@ def expr_compute(s: str) -> Optional[float]:
     val = evaluate_stack(exprStack[:])
     return val
 
+# Add command history support
+kb = KeyBindings()
+
+@kb.add('up')
+def _(event):
+    # Move up in the command history
+    event.current_buffer.auto_up()
+
+@kb.add('down')
+def _(event):
+    # Move down in the command history
+    event.current_buffer.auto_down()
+
 
 while True:
-    inp = str(input())
-    if inp.lower() == "end" or inp.lower() == "break":
+    # inp = str(input())
+    inp = get_input_with_autocomplete()
+    if inp.lower() == "end" or inp.lower() == "break" or inp.lower() == "clear":
         break
-    print(f"Result = {expr_compute(inp)}")
+    result = expr_compute(inp)
+
+    if result is not None:
+        print(f"Result = {result}")
+    else:
+        print("Invalid input or empty expression.")
 
 # flake8: noqa
