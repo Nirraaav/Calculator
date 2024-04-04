@@ -33,7 +33,7 @@ exprStack: Any = []
 
 # Define the autocomplete words
 # autocomplete_words = list(set(math.__dict__.keys())) + list(set(operator.__dict__.keys()))
-autocomplete_words = list(set(["sin", "cos", "tan", "sqrt", "ln", "log", "log2", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "asinh", "acosh", "atanh", "factorial", "fac", "phi", "gamma", "c", "G"]))
+autocomplete_words = list(set(["sin", "cos", "tan", "sqrt", "ln", "log", "log2", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "asinh", "acosh", "atanh", "factorial", "fac", "phi", "gamma", "c", "G", "break", "end", "clear"]))
 autocomplete_words = list(set(autocomplete_words))
 
 # Define the style for the autocomplete suggestions
