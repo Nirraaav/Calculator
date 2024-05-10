@@ -3,6 +3,7 @@
 import math
 import operator
 from typing import Any, List, Optional, Union
+import sys
 
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import WordCompleter
@@ -227,16 +228,20 @@ def _(event):
     event.current_buffer.auto_down()
 
 
-while True:
-    # inp = str(input())
-    inp = get_input_with_autocomplete()
-    if inp.lower() == "end" or inp.lower() == "break" or inp.lower() == "clear":
-        break
-    result = expr_compute(inp)
+try:
+    while True:
+        inp = get_input_with_autocomplete()
+        if inp.lower() == "end" or inp.lower() == "break" or inp.lower() == "clear":
+            break
+        result = expr_compute(inp)
 
-    if result is not None:
-        print(f"Result = {result}")
-    else:
-        print("Invalid input or empty expression.")
+        if result is not None:
+            print(f"Result = {result}")
+        else:
+            print("Invalid input or empty expression.")
+
+except (KeyboardInterrupt, EOFError):
+    print("\nExiting...")
+    sys.exit(0)
 
 # flake8: noqa
