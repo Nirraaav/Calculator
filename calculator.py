@@ -4,6 +4,7 @@ import math
 import operator
 from typing import Any, List, Optional, Union
 import sys
+import os
 
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import WordCompleter
@@ -232,14 +233,34 @@ def _(event):
     # Move down in the command history
     event.current_buffer.auto_down()
 
+def clear_terminal():
+    # Clear command as a function for reuse
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+# Help information
+help_info = {
+    "functions": ", ".join(sorted(fn.keys())),
+    "operators": ", ".join(sorted(opn.keys())),
+    "constants": ", ".join(sorted(constants.keys()))
+}
+
+def print_help():
+    print("Available functions:", help_info["functions"])
+    print("Available operators:", help_info["operators"])
+    print("Available constants:", help_info["constants"].lower())
 
 try:
     while True:
         inp = get_input_with_autocomplete()
-        if inp.lower() == "end" or inp.lower() == "break" or inp.lower() == "clear":
+        if inp.lower() in {"end", "break"}:
             break
+        if inp.lower() == "clear":
+            clear_terminal()
+            continue
+        if inp.lower() == "help":
+            print_help()
+            continue
         result = expr_compute(inp)
-
         if result is not None:
             print(f"Result = {result}")
         else:
