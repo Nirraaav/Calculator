@@ -28,6 +28,7 @@ from pyparsing import (
     alphanums,
     alphas,
     delimitedList,
+    ParseException
 )  # NOQA
 
 exprStack: Any = []
@@ -210,9 +211,13 @@ def expr_compute(s: str) -> Optional[float]:
     if s == "":
         return None
     exprStack[:] = []
-    BNF().parseString(s, parseAll=True)
-    val = evaluate_stack(exprStack[:])
-    return val
+    try:
+        BNF().parseString(s, parseAll=True)
+        val = evaluate_stack(exprStack[:])
+        return val
+    except (ParseException, Exception) as e:
+        print(f"Error: {e}")
+        return None
 
 # Add command history support
 kb = KeyBindings()
