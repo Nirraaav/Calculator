@@ -237,17 +237,58 @@ def clear_terminal():
     # Clear command as a function for reuse
     os.system('cls' if os.name == 'nt' else 'clear')
 
-# Help information
+# Detailed help information
 help_info = {
-    "functions": ", ".join(sorted(fn.keys())),
-    "operators": ", ".join(sorted(opn.keys())),
-    "constants": ", ".join(sorted(constants.keys()))
+    "functions": {
+        "sin": "sin(x) - Sine of x (x in radians)",
+        "cos": "cos(x) - Cosine of x (x in radians)",
+        "tan": "tan(x) - Tangent of x (x in radians)",
+        "sqrt": "sqrt(x) - Square root of x",
+        "ln": "ln(x) - Natural logarithm of x",
+        "log": "log(x) - Base-10 logarithm of x",
+        "log2": "log2(x) - Base-2 logarithm of x",
+        "asin": "asin(x) - Arc sine of x (in radians)",
+        "acos": "acos(x) - Arc cosine of x (in radians)",
+        "atan": "atan(x) - Arc tangent of x (in radians)",
+        "atan2": "atan2(y, x) - Arc tangent of y/x (in radians)",
+        "sinh": "sinh(x) - Hyperbolic sine of x",
+        "cosh": "cosh(x) - Hyperbolic cosine of x",
+        "tanh": "tanh(x) - Hyperbolic tangent of x",
+        "asinh": "asinh(x) - Inverse hyperbolic sine of x",
+        "acosh": "acosh(x) - Inverse hyperbolic cosine of x",
+        "atanh": "atanh(x) - Inverse hyperbolic tangent of x",
+        "factorial": "factorial(n) - Factorial of n (n!)",
+        "fac": "fac(n) - Alias for factorial(n)",
+    },
+    "operators": {
+        "+": "Addition",
+        "-": "Subtraction",
+        "*": "Multiplication",
+        "/": "Division",
+        "^": "Exponentiation",
+    },
+    "constants": {
+        "pi": "PI - The mathematical constant π (3.14159...)",
+        "e": "E - The mathematical constant e (2.71828...)",
+        "tau": "TAU - The mathematical constant τ (2π)",
+        "phi": "PHI - The golden ratio ((1 + sqrt(5)) / 2)",
+        "gamma": "GAMMA - Euler-Mascheroni constant (0.57721...)",
+        "c": "C - Speed of light in meters per second (299792458 m/s)",
+        "G": "G - Gravitational constant (6.67430e-11 m^3 kg^-1 s^-2)",
+    }
 }
 
-def print_help():
-    print("Available functions:", help_info["functions"])
-    print("Available operators:", help_info["operators"])
-    print("Available constants:", help_info["constants"].lower())
+def print_help(item=None):
+    if item is None:
+        print("Available functions:", ", ".join(sorted(help_info["functions"].keys())))
+        print("Available operators:", ", ".join(sorted(help_info["operators"].keys())))
+        print("Available constants:", ", ".join(sorted(help_info["constants"].keys())).lower())
+    else:
+        for category in help_info:
+            if item in help_info[category]:
+                print(f"{item}: {help_info[category][item]}")
+                return
+        print(f"No help available for '{item}'")
 
 try:
     while True:
@@ -257,8 +298,14 @@ try:
         if inp.lower() == "clear":
             clear_terminal()
             continue
-        if inp.lower() == "help":
-            print_help()
+        if inp.lower().startswith("help"):
+            parts = inp.split()
+            if len(parts) == 1:
+                print_help()
+            elif len(parts) == 2:
+                print_help(parts[1])
+            else:
+                print("Invalid help command. Use 'help' or 'help <item>'.")
             continue
         result = expr_compute(inp)
         if result is not None:
@@ -269,5 +316,4 @@ try:
 except (KeyboardInterrupt, EOFError):
     print("\nExiting...")
     sys.exit(0)
-
 # flake8: noqa
