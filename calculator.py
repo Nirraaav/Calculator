@@ -288,6 +288,11 @@ def print_help(item=None):
             if item in help_info[category]:
                 print(f"{item}: {help_info[category][item]}")
                 return
+
+        if item in help_info.keys():
+            print(f"Available {item}:", ", ".join(sorted(help_info[f"{item}"].keys())))
+            return
+
         print(f"No help available for '{item}'")
 
 try:
