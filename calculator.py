@@ -34,6 +34,8 @@ from pyparsing import (
 
 exprStack: Any = []
 
+sys.set_int_max_str_digits(100000)
+
 # Define the autocomplete words
 # autocomplete_words = list(set(math.__dict__.keys())) + list(set(operator.__dict__.keys()))
 autocomplete_words = list(set(["sin", "cos", "tan", "sqrt", "ln", "log", "log2", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "asinh", "acosh", "atanh", "factorial", "fac", "phi", "gamma", "c", "G", "break", "end", "clear"]))
